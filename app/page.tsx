@@ -62,7 +62,6 @@ export default function PublicPage() {
   const [loading, setLoading]       = useState(true)
   const [selectedSeat, setSelectedSeat] = useState<(Seat & { table?: Table }) | null>(null)
   const [isMobile, setIsMobile]     = useState(false)
-  const [isLandscape, setIsLandscape] = useState(false)
   const [headerHeight, setHeaderHeight] = useState(200)
   const headerRef = useRef<HTMLDivElement>(null)
 
@@ -84,10 +83,7 @@ export default function PublicPage() {
 
   useEffect(() => {
     function update() {
-      const w = window.innerWidth
-      const h = window.innerHeight
-      setIsMobile(w < 768)
-      setIsLandscape(w > h && w < 1024)
+      setIsMobile(window.innerWidth < 768)
     }
     update()
     window.addEventListener('resize', update)
@@ -99,7 +95,7 @@ export default function PublicPage() {
   }, [])
 
   useEffect(() => {
-    if (!isMobile || isLandscape) return
+    if (!isMobile) return
     const el = headerRef.current
     if (!el) return
     const ro = new ResizeObserver(([entry]) => {
@@ -107,14 +103,13 @@ export default function PublicPage() {
     })
     ro.observe(el)
     return () => ro.disconnect()
-  }, [isMobile, isLandscape])
+  }, [isMobile])
 
   function handleSeatClick(seat: Seat) {
     const parentTable = tables.find(t => t.seats?.some(s => s.id === seat.id))
     setSelectedSeat({ ...seat, table: parentTable })
   }
 
-  // Stats for landscape compact header
   let statsTotal = 0
   let statsReserved = 0
   for (const t of tables) {
@@ -136,148 +131,127 @@ export default function PublicPage() {
         overflow: isMobile ? 'hidden' : undefined,
       }}
     >
+      <style>{`
+        @media (orientation: landscape) and (max-width: 1024px) {
+          .zmm-landscape-bar { display: flex !important; }
+          .zmm-portrait-content { display: none !important; }
+          .zmm-map-container { height: calc(100vh - 56px - 32px) !important; }
+          .zmm-legend-mobile { height: 32px !important; }
+        }
+      `}</style>
 
-      {isMobile && isLandscape ? (
-        /* ── LANDSCAPE MOBILE ── */
-        <>
-          {/* Compact 56px header bar */}
-          <div style={{ display: 'flex', alignItems: 'center', height: 56, background: '#E5DFD1', position: 'sticky', top: 0, zIndex: 50, padding: '0 12px', gap: 8 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/zmm-logo.jpg" alt="זכרון מנחם משה" style={{ height: 48, width: 110, objectFit: 'contain' }} />
-            <div style={{ flex: 1, textAlign: 'center', fontSize: 11, color: '#9A9080', fontFamily: 'sans-serif' }}>
-              {statsAvailable} available · {statsTotal} total
-            </div>
+      {/* Sticky header — ref measured for portrait mobile map height */}
+      <div
+        ref={isMobile ? headerRef : null}
+        style={{ position: 'sticky', top: 0, zIndex: 50, background: '#E5DFD1' }}
+      >
+        {/* Landscape bar — hidden by default, shown by CSS media query in landscape mobile */}
+        <div
+          className="zmm-landscape-bar"
+          style={{ display: 'none', alignItems: 'center', height: 56, background: '#E5DFD1', padding: '0 12px', gap: 8 }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/zmm-logo.jpg" alt="זכרון מנחם משה" style={{ height: 48, width: 110, objectFit: 'contain' }} />
+          <div style={{ flex: 1, textAlign: 'center', fontSize: 11, color: '#9A9080', fontFamily: 'sans-serif' }}>
+            {statsAvailable} available · {statsTotal} total
+          </div>
+          <Link
+            href="/admin/login"
+            className="px-3 py-1.5 rounded border font-sans"
+            style={{ fontSize: 12, fontWeight: 500, color: '#1C2B4A', borderColor: '#1C2B4A', background: 'transparent', whiteSpace: 'nowrap' }}
+          >
+            Admin
+          </Link>
+        </div>
+
+        {/* Portrait header — shown by default, hidden by CSS in landscape mobile */}
+        <div className="zmm-portrait-content">
+          <header className="pt-6 pb-3 px-4 text-center relative">
             <Link
               href="/admin/login"
-              className="px-3 py-1.5 rounded border font-sans"
-              style={{ fontSize: 12, fontWeight: 500, color: '#1C2B4A', borderColor: '#1C2B4A', background: 'transparent', whiteSpace: 'nowrap' }}
+              className="absolute top-0 right-4 px-3 py-1.5 rounded border font-sans"
+              style={{ fontSize: 12, fontWeight: 500, color: '#1C2B4A', borderColor: '#1C2B4A', background: 'transparent' }}
             >
-              Admin
+              {isMobile ? 'Admin' : 'Admin Login'}
             </Link>
-          </div>
-
-          {/* Map */}
-          {loading ? (
-            <div style={{ height: 'calc(100vh - 56px - 32px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span className="text-gray-400 font-sans animate-pulse">Loading seating chart…</span>
+            <div
+              style={{
+                width: 280,
+                height: 110,
+                overflow: 'hidden',
+                margin: '0 auto',
+                WebkitMaskImage: 'linear-gradient(to bottom, black 62%, transparent 100%)',
+                maskImage: 'linear-gradient(to bottom, black 62%, transparent 100%)',
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/zmm-logo.jpg"
+                alt="זכרון מנחם משה"
+                style={{ width: '100%', objectFit: 'cover', objectPosition: 'top center' }}
+              />
             </div>
-          ) : (
-            <div style={{ position: 'relative', height: 'calc(100vh - 56px - 32px)', overflow: 'hidden' }}>
-              <TransformWrapper initialScale={0.45} minScale={0.3} maxScale={3}>
-                <>
-                  <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
-                    <SeatingGrid tables={tables} isAdmin={false} onSeatClick={handleSeatClick} />
-                  </TransformComponent>
-                  <ZoomControls />
-                </>
-              </TransformWrapper>
-            </div>
-          )}
-
-          {/* Compact legend */}
-          <div style={{ height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <CompactLegend />
+            <p className="font-sans text-gray-500 text-sm mt-1">Seating Chart — click a green seat to request it</p>
+          </header>
+          <div className="flex justify-center px-4 mb-4">
+            <StatsBar tables={tables} />
           </div>
-        </>
+        </div>
+      </div>
+
+      {/* Map area */}
+      {isMobile ? (
+        loading ? (
+          <div className="zmm-map-container" style={{ height: `calc(100vh - ${headerHeight}px - 44px)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span className="text-gray-400 font-sans animate-pulse">Loading seating chart…</span>
+          </div>
+        ) : (
+          <div className="zmm-map-container" style={{ position: 'relative', height: `calc(100vh - ${headerHeight}px - 44px)`, overflow: 'hidden' }}>
+            <TransformWrapper initialScale={0.45} minScale={0.3} maxScale={3} centerOnInit={true} limitToBounds={true}>
+              <>
+                <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
+                  <SeatingGrid tables={tables} isAdmin={false} onSeatClick={handleSeatClick} />
+                </TransformComponent>
+                <ZoomControls />
+              </>
+            </TransformWrapper>
+          </div>
+        )
       ) : (
-        /* ── PORTRAIT (mobile or desktop) ── */
-        <>
-          {/* Sticky portrait header */}
-          <div
-            ref={isMobile ? headerRef : null}
-            style={{ position: 'sticky', top: 0, zIndex: 50, background: '#E5DFD1' }}
-          >
-            {/* Header */}
-            <header className="pt-6 pb-3 px-4 text-center relative">
-              <Link
-                href="/admin/login"
-                className="absolute top-0 right-4 px-3 py-1.5 rounded border font-sans"
-                style={{ fontSize: 12, fontWeight: 500, color: '#1C2B4A', borderColor: '#1C2B4A', background: 'transparent' }}
-              >
-                {isMobile ? 'Admin' : 'Admin Login'}
-              </Link>
-              <div
-                style={{
-                  width: 280,
-                  height: 110,
-                  overflow: 'hidden',
-                  margin: '0 auto',
-                  WebkitMaskImage: 'linear-gradient(to bottom, black 62%, transparent 100%)',
-                  maskImage: 'linear-gradient(to bottom, black 62%, transparent 100%)',
-                }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/zmm-logo.jpg"
-                  alt="זכרון מנחם משה"
-                  style={{ width: '100%', objectFit: 'cover', objectPosition: 'top center' }}
-                />
-              </div>
-              <p className="font-sans text-gray-500 text-sm mt-1">Seating Chart — click a green seat to request it</p>
-            </header>
-
-            {/* Stats */}
-            <div className="flex justify-center px-4 mb-4">
-              <StatsBar tables={tables} />
-            </div>
-          </div>
-
-          {/* Grid / Map */}
-          {isMobile ? (
-            /* Mobile portrait: TransformWrapper */
-            loading ? (
-              <div style={{ height: `calc(100vh - ${headerHeight}px - 40px)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span className="text-gray-400 font-sans animate-pulse">Loading seating chart…</span>
+        /* Desktop: unchanged */
+        <div className="overflow-x-auto overflow-y-auto pb-8 px-4" style={{ height: 'calc(100vh - 200px)' }}>
+          <div className="flex justify-center" style={{ minWidth: 'max-content', margin: '0 auto' }}>
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="text-gray-400 font-sans animate-pulse">Loading seating chart…</div>
               </div>
             ) : (
-              <div style={{ position: 'relative', height: `calc(100vh - ${headerHeight}px - 40px)`, overflow: 'hidden' }}>
-                <TransformWrapper initialScale={0.45} minScale={0.3} maxScale={3}>
-                  <>
-                    <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
-                      <SeatingGrid tables={tables} isAdmin={false} onSeatClick={handleSeatClick} />
-                    </TransformComponent>
-                    <ZoomControls />
-                  </>
-                </TransformWrapper>
-              </div>
-            )
-          ) : (
-            /* Desktop: unchanged */
-            <div className="overflow-x-auto overflow-y-auto pb-8 px-4" style={{ height: 'calc(100vh - 200px)' }}>
-              <div className="flex justify-center" style={{ minWidth: 'max-content', margin: '0 auto' }}>
-                {loading ? (
-                  <div className="flex items-center justify-center h-64">
-                    <div className="text-gray-400 font-sans animate-pulse">Loading seating chart…</div>
-                  </div>
-                ) : (
-                  <SeatingGrid
-                    tables={tables}
-                    isAdmin={false}
-                    onSeatClick={handleSeatClick}
-                  />
-                )}
-              </div>
-            </div>
-          )}
+              <SeatingGrid
+                tables={tables}
+                isAdmin={false}
+                onSeatClick={handleSeatClick}
+              />
+            )}
+          </div>
+        </div>
+      )}
 
-          {/* Legend */}
-          {isMobile ? (
-            <div style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <CompactLegend />
-            </div>
-          ) : (
-            <div className="flex justify-center gap-6 pb-8 font-sans text-xs text-gray-500">
-              <div className="flex items-center gap-1.5">
-                <div className="w-4 h-4 rounded" style={{ background: '#3A8F3D' }} />
-                Available
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-4 h-4 rounded" style={{ background: '#DDD8CC', border: '1px solid #9A9080' }} />
-                Reserved
-              </div>
-            </div>
-          )}
-        </>
+      {/* Legend */}
+      {isMobile ? (
+        <div className="zmm-legend-mobile" style={{ height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <CompactLegend />
+        </div>
+      ) : (
+        <div className="flex justify-center gap-6 pb-8 font-sans text-xs text-gray-500">
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded" style={{ background: '#3A8F3D' }} />
+            Available
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded" style={{ background: '#DDD8CC', border: '1px solid #9A9080' }} />
+            Reserved
+          </div>
+        </div>
       )}
 
       {/* Request modal */}
