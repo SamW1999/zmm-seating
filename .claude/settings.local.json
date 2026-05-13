@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(Get-Content \"C:\\\\Users\\\\samwe\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-samwe-OneDrive-Desktop-Claude-Projects-Arzei-Shul-Seating\\\\f3d79dea-b819-478e-a114-f12065d8b798\\\\tasks\\\\bongqzowz.output\" -Wait)",
+      "Bash(Select-String --line-buffered \"Ready|ready|Error|error|warn|port\")",
+      "Bash(npx tsc *)",
+      "Bash(npm install *)"
+    ]
+  }
+}
