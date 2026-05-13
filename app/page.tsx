@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
 import { createClient } from '@/lib/supabase'
 import { Table, Seat } from '@/lib/types'
 import { dedupeTables } from '@/lib/dedupe'
@@ -14,6 +15,15 @@ export default function PublicPage() {
   const [tables, setTables]         = useState<Table[]>([])
   const [loading, setLoading]       = useState(true)
   const [selectedSeat, setSelectedSeat] = useState<(Seat & { table?: Table }) | null>(null)
+  const [initialScale] = useState(() => typeof window !== 'undefined' ? (window.innerWidth < 768 ? window.innerWidth / 1600 : 1) : 1)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   async function fetchData() {
     const { data, error } = await supabase
@@ -44,10 +54,17 @@ export default function PublicPage() {
         <header className="pt-6 pb-3 px-4 text-center relative">
           <Link
             href="/admin/login"
-            className="absolute top-0 right-4 px-3 py-1.5 rounded border font-sans"
-            style={{ fontSize: 12, fontWeight: 500, color: '#1C2B4A', borderColor: '#1C2B4A', background: 'transparent' }}
+            className="absolute top-0 right-4 rounded border font-sans"
+            style={{
+              fontSize: isMobile ? 11 : 12,
+              fontWeight: 500,
+              color: '#1C2B4A',
+              borderColor: '#1C2B4A',
+              background: 'transparent',
+              padding: isMobile ? '4px 8px' : '6px 12px',
+            }}
           >
-            Admin Login
+            {isMobile ? 'Admin' : 'Admin Login'}
           </Link>
           <div
             style={{
@@ -76,20 +93,28 @@ export default function PublicPage() {
       </div>
 
       {/* Grid */}
-      <div className="overflow-x-auto overflow-y-auto pb-8 px-4" style={{ height: 'calc(100vh - 200px)' }}>
-        <div className="flex justify-center" style={{ minWidth: 'max-content', margin: '0 auto' }}>
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-gray-400 font-sans animate-pulse">Loading seating chart…</div>
-            </div>
-          ) : (
-            <SeatingGrid
-              tables={tables}
-              isAdmin={false}
-              onSeatClick={handleSeatClick}
-            />
-          )}
-        </div>
+      <div className="px-4 pb-8" style={{ height: 'calc(100vh - 200px)' }}>
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-gray-400 font-sans animate-pulse">Loading seating chart…</div>
+          </div>
+        ) : (
+          <TransformWrapper
+            initialScale={initialScale}
+            minScale={0.3}
+            maxScale={3}
+          >
+            <TransformComponent
+              wrapperStyle={{ width: '100%', height: '100%' }}
+            >
+              <SeatingGrid
+                tables={tables}
+                isAdmin={false}
+                onSeatClick={handleSeatClick}
+              />
+            </TransformComponent>
+          </TransformWrapper>
+        )}
       </div>
 
       {/* Legend */}

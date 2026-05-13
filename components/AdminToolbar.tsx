@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+
 import { createClient } from '@/lib/supabase'
 import { Table } from '@/lib/types'
 import { useRouter } from 'next/navigation'
@@ -18,6 +19,7 @@ export default function AdminToolbar({ pendingCount, gridRef, tables, onToggleQu
   const [showExportModal, setShowExportModal] = useState(false)
   const [exportLabel, setExportLabel] = useState('')
   const [exportType, setExportType] = useState<'png' | 'pdf'>('png')
+  const [menuOpen, setMenuOpen] = useState(false)
 
   async function handleLogout() {
     const supabase = createClient()
@@ -72,11 +74,35 @@ export default function AdminToolbar({ pendingCount, gridRef, tables, onToggleQu
           <span className="font-garamond text-xl">ZMM Admin</span>
         </div>
 
-        <nav className="flex items-center gap-1 flex-wrap">
+        {/* Desktop nav */}
+        <nav className="hidden md:flex items-center gap-1">
           <a href="/admin"          className="px-3 py-1.5 text-blue-200 hover:text-white text-sm transition-colors">Dashboard</a>
           <a href="/admin/settings" className="px-3 py-1.5 text-blue-200 hover:text-white text-sm transition-colors">Settings</a>
           <a href="/" target="_blank" className="px-3 py-1.5 text-blue-200 hover:text-white text-sm transition-colors">Public View ↗</a>
         </nav>
+
+        {/* Mobile hamburger */}
+        <div className="relative md:hidden">
+          <button
+            onClick={() => setMenuOpen(o => !o)}
+            className="p-2 text-white flex items-center justify-center"
+            style={{ minHeight: 44, minWidth: 44 }}
+            aria-label="Open menu"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+          {menuOpen && (
+            <div className="absolute top-full right-0 bg-[#1C2B4A] border border-blue-800 rounded-lg shadow-lg py-1 min-w-[160px] z-[100] mt-1">
+              <a href="/admin"          className="block px-4 py-3 text-blue-200 hover:text-white text-sm transition-colors">Dashboard</a>
+              <a href="/admin/settings" className="block px-4 py-3 text-blue-200 hover:text-white text-sm transition-colors">Settings</a>
+              <a href="/" target="_blank" className="block px-4 py-3 text-blue-200 hover:text-white text-sm transition-colors">Public View ↗</a>
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center gap-2">
           {/* Inbox / queue toggle button */}
@@ -86,6 +112,7 @@ export default function AdminToolbar({ pendingCount, gridRef, tables, onToggleQu
                 onClick={onToggleQueue}
                 title="Toggle request queue"
                 className="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-xs rounded-lg transition-colors flex items-center gap-1.5"
+                style={{ minHeight: 44 }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
@@ -123,12 +150,14 @@ export default function AdminToolbar({ pendingCount, gridRef, tables, onToggleQu
               <button
                 onClick={() => openExport('png')}
                 className="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-xs rounded-lg transition-colors"
+                style={{ minHeight: 44 }}
               >
                 📷 PNG
               </button>
               <button
                 onClick={() => openExport('pdf')}
                 className="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-xs rounded-lg transition-colors"
+                style={{ minHeight: 44 }}
               >
                 📄 PDF
               </button>
@@ -138,6 +167,7 @@ export default function AdminToolbar({ pendingCount, gridRef, tables, onToggleQu
           <button
             onClick={handleLogout}
             className="px-3 py-1.5 bg-red-700 hover:bg-red-600 text-white text-xs rounded-lg transition-colors"
+            style={{ minHeight: 44 }}
           >
             Logout
           </button>
