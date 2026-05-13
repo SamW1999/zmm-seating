@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { TransformWrapper, TransformComponent, useControls } from 'react-zoom-pan-pinch'
 import { createClient } from '@/lib/supabase'
 import { Table, SeatRequest } from '@/lib/types'
 import { dedupeTables } from '@/lib/dedupe'
@@ -9,6 +10,23 @@ import EditDrawer from '@/components/EditDrawer'
 import RequestQueue from '@/components/RequestQueue'
 import AdminToolbar from '@/components/AdminToolbar'
 
+const zoomBtnStyle: React.CSSProperties = {
+  width: 36, height: 36, borderRadius: '50%', background: '#1C2B4A', color: '#fff',
+  border: 'none', fontSize: 18, lineHeight: 1, cursor: 'pointer',
+  display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600,
+}
+
+function ZoomControls() {
+  const { zoomIn, zoomOut, resetTransform } = useControls()
+  return (
+    <div style={{ position: 'absolute', bottom: 12, right: 12, display: 'flex', flexDirection: 'column', gap: 8, zIndex: 10 }}>
+      <button style={zoomBtnStyle} onClick={() => zoomIn()}>+</button>
+      <button style={zoomBtnStyle} onClick={() => zoomOut()}>−</button>
+      <button style={zoomBtnStyle} onClick={() => resetTransform()}>⟳</button>
+    </div>
+  )
+}
+
 export default function AdminPage() {
   const [supabase] = useState(() => createClient())
   const [tables, setTables]           = useState<Table[]>([])
@@ -16,6 +34,7 @@ export default function AdminPage() {
   const [selectedTable, setSelectedTable] = useState<Table | null>(null)
   const [loading, setLoading]         = useState(true)
   const [queueOpen, setQueueOpen]     = useState(false)
+  const [isMobile, setIsMobile]       = useState(false)
   const gridRef = useRef<HTMLDivElement>(null)
 
   const fetchAll = useCallback(async () => {
@@ -52,6 +71,17 @@ export default function AdminPage() {
     return () => { supabase.removeChannel(channel) }
   }, [fetchAll, supabase])
 
+  useEffect(() => {
+    function update() { setIsMobile(window.innerWidth < 1024) }
+    update()
+    window.addEventListener('resize', update)
+    window.addEventListener('orientationchange', update)
+    return () => {
+      window.removeEventListener('resize', update)
+      window.removeEventListener('orientationchange', update)
+    }
+  }, [])
+
   const pendingCount = requests.filter(r => r.status === 'pending').length
 
   // EditDrawer fetches its own seat data; we just refresh the grid.
@@ -75,17 +105,38 @@ export default function AdminPage() {
       ) : (
         <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 overflow-hidden relative">
           {/* Left: seating chart — expands when queue is closed */}
-          <div className="flex-1 overflow-x-auto overflow-y-auto">
-            <p className="font-sans text-xs text-gray-500 mb-2">Click any table to edit seats &amp; requests</p>
-            <div style={{ minWidth: 'max-content' }}>
-              <SeatingGrid
-                tables={tables}
-                isAdmin={true}
-                onTableClick={t => setSelectedTable(t)}
-                gridRef={gridRef}
-              />
+          {isMobile ? (
+            <div className="flex-1 flex flex-col overflow-hidden relative">
+              <p className="font-sans text-xs text-gray-500 mb-2">Click any table to edit seats &amp; requests</p>
+              <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+                <TransformWrapper initialScale={0.45} minScale={0.3} maxScale={3} centerOnInit={true} limitToBounds={true}>
+                  <>
+                    <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
+                      <SeatingGrid
+                        tables={tables}
+                        isAdmin={true}
+                        onTableClick={t => setSelectedTable(t)}
+                        gridRef={gridRef}
+                      />
+                    </TransformComponent>
+                    <ZoomControls />
+                  </>
+                </TransformWrapper>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex-1 overflow-x-auto overflow-y-auto">
+              <p className="font-sans text-xs text-gray-500 mb-2">Click any table to edit seats &amp; requests</p>
+              <div style={{ minWidth: 'max-content' }}>
+                <SeatingGrid
+                  tables={tables}
+                  isAdmin={true}
+                  onTableClick={t => setSelectedTable(t)}
+                  gridRef={gridRef}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Right: collapsible request queue panel */}
           {queueOpen && (

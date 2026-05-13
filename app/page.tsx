@@ -62,6 +62,7 @@ export default function PublicPage() {
   const [loading, setLoading]       = useState(true)
   const [selectedSeat, setSelectedSeat] = useState<(Seat & { table?: Table }) | null>(null)
   const [isMobile, setIsMobile]     = useState(false)
+  const [isLandscape, setIsLandscape] = useState(false)
   const [headerHeight, setHeaderHeight] = useState(200)
   const headerRef = useRef<HTMLDivElement>(null)
 
@@ -83,7 +84,8 @@ export default function PublicPage() {
 
   useEffect(() => {
     function update() {
-      setIsMobile(window.innerWidth < 768)
+      setIsMobile(window.innerWidth < 1024)
+      setIsLandscape(window.matchMedia('(orientation: landscape)').matches)
     }
     update()
     window.addEventListener('resize', update)
@@ -128,7 +130,8 @@ export default function PublicPage() {
         background: '#E5DFD1',
         minHeight: !isMobile ? '100vh' : undefined,
         height: isMobile ? '100vh' : undefined,
-        overflow: isMobile ? 'hidden' : undefined,
+        display: isMobile ? 'flex' : undefined,
+        flexDirection: isMobile ? 'column' : undefined,
       }}
     >
       <style>{`
@@ -152,8 +155,8 @@ export default function PublicPage() {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/zmm-logo.jpg" alt="זכרון מנחם משה" style={{ height: 48, width: 110, objectFit: 'contain' }} />
-          <div style={{ flex: 1, textAlign: 'center', fontSize: 11, color: '#9A9080', fontFamily: 'sans-serif' }}>
-            {statsAvailable} available · {statsTotal} total
+          <div style={{ flex: 1, textAlign: 'center', fontSize: 15, fontWeight: 600, color: '#4A4030', fontFamily: 'sans-serif' }}>
+            {statsAvailable} available · {statsReserved} reserved · {statsTotal} total
           </div>
           <Link
             href="/admin/login"
@@ -202,11 +205,11 @@ export default function PublicPage() {
       {/* Map area */}
       {isMobile ? (
         loading ? (
-          <div className="zmm-map-container" style={{ height: `calc(100vh - ${headerHeight}px - 44px)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="zmm-map-container" style={{ height: isLandscape ? 'calc(100vh - 56px - 32px)' : `calc(100vh - ${headerHeight}px - 44px)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span className="text-gray-400 font-sans animate-pulse">Loading seating chart…</span>
           </div>
         ) : (
-          <div className="zmm-map-container" style={{ position: 'relative', height: `calc(100vh - ${headerHeight}px - 44px)`, overflow: 'hidden' }}>
+          <div className="zmm-map-container" style={{ position: 'relative', height: isLandscape ? 'calc(100vh - 56px - 32px)' : `calc(100vh - ${headerHeight}px - 44px)`, overflow: 'hidden' }}>
             <TransformWrapper initialScale={0.45} minScale={0.3} maxScale={3} centerOnInit={true} limitToBounds={true}>
               <>
                 <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
