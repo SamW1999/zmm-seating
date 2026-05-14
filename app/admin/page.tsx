@@ -36,6 +36,8 @@ export default function AdminPage() {
   const [queueOpen, setQueueOpen]     = useState(false)
   const [isMobile, setIsMobile]       = useState(false)
   const gridRef = useRef<HTMLDivElement>(null)
+  const mapContainerRef = useRef<HTMLDivElement>(null)
+  const [fittedScale, setFittedScale] = useState(0.45)
 
   const fetchAll = useCallback(async () => {
     const [tablesRes, requestsRes] = await Promise.all([
@@ -82,6 +84,17 @@ export default function AdminPage() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!isMobile || loading) return
+    const el = mapContainerRef.current
+    if (!el) return
+    const containerW = el.offsetWidth
+    const containerH = el.offsetHeight
+    const scaleW = containerW / 1600
+    const scaleH = containerH / 710
+    setFittedScale(Math.min(Math.max(scaleW, scaleH), 1))
+  }, [isMobile, loading])
+
   const pendingCount = requests.filter(r => r.status === 'pending').length
 
   // EditDrawer fetches its own seat data; we just refresh the grid.
@@ -103,13 +116,12 @@ export default function AdminPage() {
           <p className="text-gray-400 font-sans animate-pulse">Loading…</p>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 overflow-hidden relative">
+        <div className="flex-1 flex flex-col lg:flex-row gap-4 p-2 lg:p-4 overflow-hidden relative">
           {/* Left: seating chart — expands when queue is closed */}
           {isMobile ? (
             <div className="flex-1 flex flex-col overflow-hidden relative">
-              <p className="font-sans text-xs text-gray-500 mb-2">Click any table to edit seats &amp; requests</p>
-              <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-                <TransformWrapper initialScale={0.45} minScale={0.3} maxScale={3} centerOnInit={true} limitToBounds={true}>
+              <div ref={mapContainerRef} style={{ height: 'calc(100vh - 56px - 16px)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <TransformWrapper initialScale={fittedScale} minScale={fittedScale} maxScale={3} centerOnInit={true} limitToBounds={true} alignmentAnimation={{ disabled: false }}>
                   <>
                     <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
                       <SeatingGrid

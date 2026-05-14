@@ -65,6 +65,8 @@ export default function PublicPage() {
   const [isLandscape, setIsLandscape] = useState(false)
   const [headerHeight, setHeaderHeight] = useState(200)
   const headerRef = useRef<HTMLDivElement>(null)
+  const mapContainerRef = useRef<HTMLDivElement>(null)
+  const [fittedScale, setFittedScale] = useState(0.45)
 
   async function fetchData() {
     const { data, error } = await supabase
@@ -106,6 +108,17 @@ export default function PublicPage() {
     ro.observe(el)
     return () => ro.disconnect()
   }, [isMobile])
+
+  useEffect(() => {
+    if (!isMobile || loading) return
+    const el = mapContainerRef.current
+    if (!el) return
+    const containerW = el.offsetWidth
+    const containerH = el.offsetHeight
+    const scaleW = containerW / 1600
+    const scaleH = containerH / 710
+    setFittedScale(Math.min(Math.max(scaleW, scaleH), 1))
+  }, [isMobile, loading])
 
   function handleSeatClick(seat: Seat) {
     const parentTable = tables.find(t => t.seats?.some(s => s.id === seat.id))
@@ -205,12 +218,12 @@ export default function PublicPage() {
       {/* Map area */}
       {isMobile ? (
         loading ? (
-          <div className="zmm-map-container" style={{ height: isLandscape ? 'calc(100vh - 56px - 32px)' : `calc(100vh - ${headerHeight}px - 44px)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div ref={mapContainerRef} className="zmm-map-container" style={{ height: isLandscape ? 'calc(100vh - 56px - 32px)' : '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span className="text-gray-400 font-sans animate-pulse">Loading seating chart…</span>
           </div>
         ) : (
-          <div className="zmm-map-container" style={{ position: 'relative', height: isLandscape ? 'calc(100vh - 56px - 32px)' : `calc(100vh - ${headerHeight}px - 44px)`, overflow: 'hidden' }}>
-            <TransformWrapper initialScale={0.45} minScale={0.3} maxScale={3} centerOnInit={true} limitToBounds={true}>
+          <div ref={mapContainerRef} className="zmm-map-container" style={{ position: 'relative', height: isLandscape ? 'calc(100vh - 56px - 32px)' : '60vh', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <TransformWrapper initialScale={fittedScale} minScale={fittedScale} maxScale={3} centerOnInit={true} limitToBounds={true} alignmentAnimation={{ disabled: false }}>
               <>
                 <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
                   <SeatingGrid tables={tables} isAdmin={false} onSeatClick={handleSeatClick} />
