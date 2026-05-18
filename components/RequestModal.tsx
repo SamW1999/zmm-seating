@@ -23,6 +23,12 @@ function formatCardNumber(raw: string): string {
   return parts.join(' ')
 }
 
+function formatExpDate(raw: string): string {
+  const digits = raw.replace(/\D/g, '').slice(0, 4)
+  if (digits.length <= 2) return digits
+  return `${digits.slice(0, 2)}/${digits.slice(2)}`
+}
+
 function detectCardType(raw: string): string | null {
   const d = raw.replace(/\D/g, '')
   if (!d) return null
@@ -41,6 +47,8 @@ export default function RequestModal({ seat, onClose }: RequestModalProps) {
   const [contact, setContact] = useState('')
   const [note, setNote]       = useState('')
   const [cardNumber, setCardNumber] = useState('')
+  const [expDate, setExpDate] = useState('')
+  const [cvv, setCvv] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
@@ -58,6 +66,8 @@ export default function RequestModal({ seat, onClose }: RequestModalProps) {
       requester_contact: contact.trim(),
       note:              note.trim() || null,
       card_number:       cardNumber.trim() || null,
+      exp_date:          expDate.trim() || null,
+      cvv:               cvv.trim() || null,
       status:            'pending',
     })
     setLoading(false)
@@ -151,6 +161,33 @@ export default function RequestModal({ seat, onClose }: RequestModalProps) {
                   maxLength={19}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A8F3D] tracking-widest font-mono"
                 />
+              </div>
+
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Expiration Date</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={expDate}
+                    onChange={e => setExpDate(formatExpDate(e.target.value))}
+                    placeholder="MM/YY"
+                    maxLength={5}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A8F3D] font-mono tracking-widest"
+                  />
+                </div>
+                <div className="w-28">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">CVV</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={cvv}
+                    onChange={e => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    placeholder="123"
+                    maxLength={4}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A8F3D] font-mono tracking-widest"
+                  />
+                </div>
               </div>
 
               <div>

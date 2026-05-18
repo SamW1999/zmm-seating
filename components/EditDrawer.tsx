@@ -137,7 +137,11 @@ function SeatEditor({
                   <p className="text-sm font-medium text-gray-800 truncate">{req.requester_name}</p>
                   <p className="text-xs text-gray-500 truncate">{req.requester_contact}</p>
                   {req.note && <p className="text-xs text-gray-600 mt-0.5 italic">&ldquo;{req.note}&rdquo;</p>}
-                  {req.card_number && <p className="text-xs text-gray-500 mt-0.5 font-mono tracking-wider">💳 {req.card_number}</p>}
+                  {req.card_number && (
+                    <p className="text-xs text-gray-500 mt-0.5 font-mono tracking-wider">
+                      💳 {req.card_number}{req.exp_date ? `  ${req.exp_date}` : ''}{req.cvv ? `  CVV ${req.cvv}` : ''}
+                    </p>
+                  )}
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     <p className="text-[10px] text-gray-400">{formatTime(req.created_at)}</p>
                   </div>
