@@ -223,7 +223,7 @@ export default function PublicPage() {
           </div>
         ) : (
           <div ref={mapContainerRef} className="zmm-map-container" style={{ position: 'relative', height: isLandscape ? 'calc(100vh - 56px - 32px)' : '60vh', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <TransformWrapper initialScale={fittedScale} minScale={fittedScale} maxScale={3} centerOnInit={true} limitToBounds={true} alignmentAnimation={{ disabled: false }}>
+            <TransformWrapper initialScale={fittedScale} minScale={fittedScale} maxScale={3} centerOnInit={true} limitToBounds={true}>
               <>
                 <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
                   <SeatingGrid tables={tables} isAdmin={false} onSeatClick={handleSeatClick} />

@@ -121,7 +121,7 @@ export default function AdminPage() {
           {isMobile ? (
             <div className="flex-1 flex flex-col overflow-hidden relative">
               <div ref={mapContainerRef} style={{ height: 'calc(100vh - 56px - 16px)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <TransformWrapper initialScale={fittedScale} minScale={fittedScale} maxScale={3} centerOnInit={true} limitToBounds={true} alignmentAnimation={{ disabled: false }}>
+                <TransformWrapper initialScale={fittedScale} minScale={fittedScale} maxScale={3} centerOnInit={true} limitToBounds={true}>
                   <>
                     <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
                       <SeatingGrid

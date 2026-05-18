@@ -10,11 +10,37 @@ interface RequestModalProps {
   onClose: () => void
 }
 
+function formatCardNumber(raw: string): string {
+  const digits = raw.replace(/\D/g, '')
+  const isAmex = digits.startsWith('34') || digits.startsWith('37')
+  if (isAmex) {
+    const d = digits.slice(0, 15)
+    return [d.slice(0, 4), d.slice(4, 10), d.slice(10)].filter(s => s).join(' ')
+  }
+  const d = digits.slice(0, 16)
+  const parts: string[] = []
+  for (let i = 0; i < d.length; i += 4) parts.push(d.slice(i, i + 4))
+  return parts.join(' ')
+}
+
+function detectCardType(raw: string): string | null {
+  const d = raw.replace(/\D/g, '')
+  if (!d) return null
+  if (d[0] === '4') return 'Visa'
+  if (/^3[47]/.test(d)) return 'Amex'
+  if (/^6(011|5|4[4-9])/.test(d) || /^622(1(2[6-9]|[3-9]\d)|[2-8]\d{2}|9([01]\d|2[0-5]))/.test(d)) return 'Discover'
+  if (/^5[1-5]/.test(d)) return 'Mastercard'
+  const prefix4 = parseInt(d.slice(0, 4), 10)
+  if (!isNaN(prefix4) && prefix4 >= 2221 && prefix4 <= 2720) return 'Mastercard'
+  return null
+}
+
 export default function RequestModal({ seat, onClose }: RequestModalProps) {
   const supabase  = createClient()
   const [name, setName]       = useState('')
   const [contact, setContact] = useState('')
   const [note, setNote]       = useState('')
+  const [cardNumber, setCardNumber] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
@@ -31,6 +57,7 @@ export default function RequestModal({ seat, onClose }: RequestModalProps) {
       requester_name:    name.trim(),
       requester_contact: contact.trim(),
       note:              note.trim() || null,
+      card_number:       cardNumber.trim() || null,
       status:            'pending',
     })
     setLoading(false)
@@ -101,6 +128,28 @@ export default function RequestModal({ seat, onClose }: RequestModalProps) {
                   required
                   placeholder="How we can reach you"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A8F3D]"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Credit Card Number
+                  </label>
+                  {detectCardType(cardNumber) && (
+                    <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full font-medium">
+                      {detectCardType(cardNumber)}
+                    </span>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={cardNumber}
+                  onChange={e => setCardNumber(formatCardNumber(e.target.value))}
+                  placeholder="1234 5678 9012 3456"
+                  maxLength={19}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A8F3D] tracking-widest font-mono"
                 />
               </div>
 

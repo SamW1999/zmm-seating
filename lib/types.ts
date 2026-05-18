@@ -23,6 +23,7 @@ export interface SeatRequest {
   requester_name: string
   requester_contact: string
   note: string | null
+  card_number: string | null
   status: 'pending' | 'approved' | 'declined'
   created_at: string
   seat?: Seat & { table?: Table }

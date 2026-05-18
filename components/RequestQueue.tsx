@@ -142,6 +142,9 @@ export default function RequestQueue({ requests, tables, onRefresh }: RequestQue
                   {req.note && (
                     <p className="text-xs text-gray-600 mt-0.5 italic">&ldquo;{req.note}&rdquo;</p>
                   )}
+                  {req.card_number && (
+                    <p className="text-xs text-gray-500 mt-0.5 font-mono tracking-wider">💳 {req.card_number}</p>
+                  )}
                   <p className="text-[10px] text-gray-400 mt-0.5">{formatTime(req.created_at)}</p>
                 </div>
 

@@ -25,7 +25,7 @@ export default function SeatButton({
   seatH = 60,
 }: SeatButtonProps) {
   const occupied = seat.is_reserved || !!seat.member_name
-  const canClick = isAdmin ? false : !occupied
+  const canClick = !isAdmin
 
   const bgColor     = occupied ? '#DDD8CC' : '#3A8F3D'
   const borderColor = occupied ? '#C2BBAC' : '#276429'
@@ -33,11 +33,11 @@ export default function SeatButton({
   return (
     <span
       style={{ display: 'inline-block' }}
-      title={occupied ? (seat.member_name ?? 'Reserved') : 'Click to request this seat'}
+      title={isAdmin ? (occupied ? (seat.member_name ?? 'Reserved') : undefined) : 'Click to request this seat'}
     >
     <button
       onClick={() => canClick && onClick?.(seat)}
-      disabled={!canClick && !isAdmin}
+      disabled={isAdmin}
       className="flex flex-col items-center justify-center rounded transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
       style={{
         width: seatW,
